@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+
+
+
+</head>
+
+
+<body>
+	<div>
+		<input type="text" id='streamIp'>
+		<button id='btnPlay' type="button" onclick="play()">OK</button>
+		</br>
+		<div id="rtsp_movie">
+			<embed id="vlc" type="application/x-vlc-plugin" pluginspage="http://www.videolan.org" autoplay="no" width="640" height="480"></embed>
+		</div>
+	</div>
+	</br>
+	<div>Car Control</div>
+	<div>
+		<P>Please input car IP including port:</P>
+		<input type="text" id='ipText'>
+		<button id='ipOKBtn' type="button" onclick="ipOK()">OK</button>
+		<button id='ipCancel' type="button" onclick="ipCancel()">DisConnect</button>
+	</div>
+	<br>
+	<div id='buttonDiv'>
+		<button type="button" onclick="moveForward()">Move Forward</button>
+		<button type="button" onclick="moveLeft()">Left</button>
+		<button type="button" onclick="moveRight()">Right</button>
+		<button type="button" onclick="stop()">Stop</button>
+	</div>
+	<br>
+	<div id="info"></div>
+
+	
+
+</body>
+</html>
+
+<script type="text/javascript">
+var keyIsDown = false;
+var carIp = 'localhost';
+var isReady = false;
+var moveForwardIntervalId;
+var moveLeftIntervalId;
+var moveRightIntervalId;
+var moveBackIntervalId;
+var INTERVAL_TIME=200;
+
+window.onload = function() {
+	document.onkeydown = showKeyDown;
+	document.onkeyup = showKeyUp;
+};
+function play(){
+	var vlc = document.getElementById("vlc");
+	vlc.playlist.add(document.getElementById('streamIp').value,"live",":network-caching=150");
+	vlc.playlist.play();
+};
+function ipOK() {
+	var ipString = document.getElementById('ipText').value;
+	console.log(ipString);
+	carIp = ipString;
+	setReadyTrue();
+};
+function ipCancel() {
+	setReadyFalse();
+};
+function setReadyTrue() {
+	document.getElementById('ipOKBtn').disabled = true;
+	document.getElementById('ipCancel').disabled = false;
+	isReady = true;
+};
+function setReadyFalse() {
+	document.getElementById('ipOKBtn').disabled = false;
+	document.getElementById('ipCancel').disabled = true;
+	isReady = false;
+};
+function showKeyDown(event) {
+	if (keyIsDown == false) {
+		event = (event) ? event : window.event;
+		console.log('one key down:' + event.keyCode);
+		if (event.keyCode == 87) {
+			moveForwardIntervalId=setInterval(moveForward,INTERVAL_TIME);
+		} else if (event.keyCode == 65) {
+			moveLeftIntervalId=setInterval(moveLeft,INTERVAL_TIME);
+		} else if (event.keyCode == 83) {
+			moveBackIntervalId=setInterval(moveBack,INTERVAL_TIME);
+		} else if (event.keyCode == 68) {
+			moveRightIntervalId=setInterval(moveRight,INTERVAL_TIME);
+		} else {
+			return;
+		}
+		keyIsDown = true;
+	}
+};
+function showKeyUp() {
+	console.log('one key up');
+	clearInterval(moveForwardIntervalId);
+	clearInterval(moveLeftIntervalId);
+	clearInterval(moveBackIntervalId);
+	clearInterval(moveRightIntervalId);
+	stop();
+	keyIsDown = false;
+};
+function moveForward() {
+	httpPost("http://" + carIp + "/car/forward", function(response) {
+		printLog(response);
+	});
+};
+function moveBack() {
+	httpPost("http://" + carIp + "/car/back", function(response) {
+		printLog(response);
+	});
+};
+function moveLeft() {
+	httpPost("http://" + carIp + "/car/left", function(response) {
+		printLog(response);
+	});
+};
+function moveRight() {
+	httpPost("http://" + carIp + "/car/right", function(response) {
+		printLog(response);
+	});
+};
+function stop() {
+	httpPost("http://" + carIp + "/car/stop", function(response) {
+		printLog(response);
+	});
+};
+function printLog(message) {
+	document.getElementById('info').innerHTML = message;
+};
+function httpPost(url, cfunc) {
+	if (isReady) {
+		var xmlhttp;
+		if (window.XMLHttpRequest) {
+			xmlhttp = new XMLHttpRequest();
+		} else {
+			xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+		}
+		xmlhttp.onreadystatechange = function() {
+			if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+				cfunc(xmlhttp.responseText);
+			}
+		};
+		xmlhttp.open("POST", url, true);
+		xmlhttp.send();
+	}
+};
+</script>
+
+

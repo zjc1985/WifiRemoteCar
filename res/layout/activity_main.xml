@@ -1,0 +1,46 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    tools:context="com.yufu.wificar.MainActivity" >
+
+    <TextView
+        android:id="@+id/logTView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/hello_world" />
+
+    <TextView
+        android:id="@+id/arduinoTView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/textView2"
+        android:layout_below="@+id/textView2"
+        android:layout_marginTop="215dp"
+        android:text="TextView" />
+
+    <TextView
+        android:id="@+id/ipTView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/arduinoTView"
+        android:layout_below="@+id/arduinoTView"
+        android:layout_marginTop="198dp"
+        android:text="TextView" />
+
+    <Button
+        android:id="@+id/button1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/logTView"
+        android:layout_marginLeft="161dp"
+        android:layout_marginTop="75dp"
+        android:layout_toRightOf="@+id/logTView"
+        android:onClick="start"
+        android:text="Button" />
+
+</RelativeLayout>
