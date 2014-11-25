@@ -1,58 +1,59 @@
-package com.yufu.wificar;
+package com.yufu.wificar.backendService;
 
 import java.io.IOException;
 import java.util.concurrent.ArrayBlockingQueue;
 
-import android.app.IntentService;
 import android.content.Intent;
-import android.support.v4.content.LocalBroadcastManager;
 
-public class HttpServerIntentService extends IntentService {
+public class HttpServerIntentService extends BaseWifiCarIntentService {
 	public static String KEY_START_INTENT_MESSAGE = "com.yufu.httpServerIntentService.message";
 
 	private CarRemoteHttpServer server;
 	private String indexHtml;
 
-	private static ArrayBlockingQueue<String> queue = new ArrayBlockingQueue<>(
-			100);
+	private static ArrayBlockingQueue<String> queue = new ArrayBlockingQueue<String>(100);
 
 	public HttpServerIntentService() {
 		super("HttpServerIntentService");
 	}
 
 	@Override
-	protected void onHandleIntent(Intent intent) {
+	protected void onHandleIntent(final Intent intent) {
 		this.indexHtml = intent.getStringExtra(KEY_START_INTENT_MESSAGE);
 		//starting to listen to queue
-		new Thread(new Runnable() {			
+		new Thread(new Runnable() {
 			@Override
 			public void run() {
-				while(true){
-					String message=queue.poll();
-					if(message==null){
-						sendBackMessage("stop");
-					}else{
-						sendBackMessage(message);
-					};
+				while (true) {
+					final String message = queue.poll();
+					if (message == null) {
+						sendArduinoCommand("stop");
+					}
+					else {
+						sendArduinoCommand(message);
+					}
+					;
 					try {
 						Thread.sleep(200);
-					} catch (InterruptedException e) {
+					}
+					catch (final InterruptedException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
-				}				
+				}
 			}
 		}).start();
-		
+
 		//starting httpServer
 		try {
-			server = new CarRemoteHttpServer(3000) {
+			this.server = new CarRemoteHttpServer(3000) {
 
 				@Override
-				protected String handleGETMessage(String inputLine) {
+				protected String handleGETMessage(final String inputLine) {
 					if (inputLine.indexOf("car/index.html") != -1) {
-						return indexHtml;
-					} else {
+						return HttpServerIntentService.this.indexHtml;
+					}
+					else {
 						return "";
 					}
 				}
@@ -61,7 +62,8 @@ public class HttpServerIntentService extends IntentService {
 				protected void carStop() {
 					try {
 						queue.put("stop");
-					} catch (InterruptedException e) {
+					}
+					catch (final InterruptedException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
@@ -73,7 +75,8 @@ public class HttpServerIntentService extends IntentService {
 				protected void carBack() {
 					try {
 						queue.put("back");
-					} catch (InterruptedException e) {
+					}
+					catch (final InterruptedException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
@@ -84,7 +87,8 @@ public class HttpServerIntentService extends IntentService {
 				protected void carRight() {
 					try {
 						queue.put("right");
-					} catch (InterruptedException e) {
+					}
+					catch (final InterruptedException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
@@ -95,7 +99,8 @@ public class HttpServerIntentService extends IntentService {
 				protected void carLeft() {
 					try {
 						queue.put("left");
-					} catch (InterruptedException e) {
+					}
+					catch (final InterruptedException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
@@ -106,7 +111,8 @@ public class HttpServerIntentService extends IntentService {
 				protected void carForward() {
 					try {
 						queue.put("go");
-					} catch (InterruptedException e) {
+					}
+					catch (final InterruptedException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
@@ -114,7 +120,8 @@ public class HttpServerIntentService extends IntentService {
 				}
 
 			};
-		} catch (IOException e1) {
+		}
+		catch (final IOException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
@@ -122,20 +129,9 @@ public class HttpServerIntentService extends IntentService {
 		sendBackLogMessage("server started at port:" + 3000);
 		try {
 			this.server.start();
-		} catch (IOException e) {
+		}
+		catch (final IOException e) {
 			sendBackLogMessage("error message:" + e.getMessage());
 		}
-	}
-
-	private void sendBackLogMessage(String message) {
-		Intent localIntent = new Intent(Constants.BROADCAST_ACTION);
-		localIntent.putExtra(Constants.EXTENDED_DATA_STATUS, message);
-		LocalBroadcastManager.getInstance(this).sendBroadcast(localIntent);
-	}
-
-	private void sendBackMessage(String message) {
-		Intent localIntent = new Intent(Constants.BROADCAST_ACTION);
-		localIntent.putExtra(Constants.EXTENDED_DATA_MESSAGE, message);
-		LocalBroadcastManager.getInstance(this).sendBroadcast(localIntent);
 	}
 }

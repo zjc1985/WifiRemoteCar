@@ -5,11 +5,12 @@
     android:versionName="1.0" >
 
     <uses-sdk
-        android:minSdkVersion="8"
+        android:minSdkVersion="19"
         android:targetSdkVersion="19" />
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
 
     <application
         android:allowBackup="true"
@@ -27,8 +28,12 @@
         </activity>
 
         <service
-            android:name=".HttpServerIntentService"
+            android:name=".backendService.HttpServerIntentService"
             android:exported="false" />
+        <service
+            android:name=".backendService.ServerListener"
+            android:exported="false" />
+        
     </application>
 
 </manifest>
