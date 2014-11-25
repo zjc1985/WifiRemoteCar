@@ -88,7 +88,7 @@ public class MainActivity extends Activity {
 
 		// show ip address
 		final RadioButton radioButton = (RadioButton) findViewById(R.id.radio0);
-		radioButton.setText("This Device itself will act as a server. at " + Utils.getIPAddress(true));
+		radioButton.setText(radioButton.getText() + " at " + Utils.getIPAddress(true));
 
 		//local broadcast receiver
 		final IntentFilter localFilter = new IntentFilter();
