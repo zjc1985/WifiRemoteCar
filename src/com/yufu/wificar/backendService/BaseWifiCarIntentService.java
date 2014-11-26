@@ -1,10 +1,10 @@
 package com.yufu.wificar.backendService;
 
-import com.yufu.wificar.util.Constants;
-
 import android.app.IntentService;
 import android.content.Intent;
 import android.support.v4.content.LocalBroadcastManager;
+
+import com.yufu.wificar.util.Constants;
 
 public abstract class BaseWifiCarIntentService extends IntentService {
 
@@ -19,8 +19,7 @@ public abstract class BaseWifiCarIntentService extends IntentService {
 		LocalBroadcastManager.getInstance(this).sendBroadcast(localIntent);
 	}
 
-	//this message will finally send to arduino
-	protected void sendArduinoCommand(final String message) {
+	protected void sendBackCommand(final String message) {
 		final Intent localIntent = new Intent(Constants.BROADCAST_ACTION);
 		localIntent.putExtra(Constants.EXTENDED_DATA_MESSAGE, message);
 		LocalBroadcastManager.getInstance(this).sendBroadcast(localIntent);

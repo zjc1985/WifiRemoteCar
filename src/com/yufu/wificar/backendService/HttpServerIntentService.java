@@ -27,10 +27,10 @@ public class HttpServerIntentService extends BaseWifiCarIntentService {
 				while (true) {
 					final String message = queue.poll();
 					if (message == null) {
-						sendArduinoCommand("stop");
+						sendBackCommand("stop");
 					}
 					else {
-						sendArduinoCommand(message);
+						sendBackCommand(message);
 					}
 					;
 					try {

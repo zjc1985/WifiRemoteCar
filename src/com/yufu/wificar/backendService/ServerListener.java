@@ -28,10 +28,10 @@ public class ServerListener extends BaseWifiCarIntentService implements Logger {
 				while (true) {
 					final String message = queue.poll();
 					if (message == null) {
-						sendArduinoCommand("stop");
+						sendBackCommand("stop");
 					}
 					else {
-						sendArduinoCommand(message);
+						sendBackCommand(message);
 					}
 					;
 					try {

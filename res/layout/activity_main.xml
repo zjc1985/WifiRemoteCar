@@ -133,6 +133,13 @@
                     android:text="Start Stream" />
             </LinearLayout>
 
+            <TextView
+                android:id="@+id/bitRateTView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="0"
+                android:text="BitRate:" />
+
             <FrameLayout
                 android:id="@+id/surface_layout"
                 android:layout_width="300dp"

@@ -13,6 +13,7 @@ import net.majorkernelpanic.streaming.SessionBuilder;
 import net.majorkernelpanic.streaming.audio.AudioQuality;
 import net.majorkernelpanic.streaming.gl.SurfaceView;
 import net.majorkernelpanic.streaming.rtsp.RtspClient;
+import net.majorkernelpanic.streaming.video.VideoQuality;
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -31,6 +32,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.SurfaceHolder;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
@@ -61,6 +63,8 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Se
 	@Override
 	protected void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
 		setContentView(R.layout.activity_main);
 
 		//init switch
@@ -118,14 +122,13 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Se
 				if (intent.hasExtra(Constants.EXTENDED_DATA_STATUS)) {
 					logInBox(intent.getStringExtra(Constants.EXTENDED_DATA_STATUS));
 				}
-				//will send to arduino
 				if (intent.hasExtra(Constants.EXTENDED_DATA_MESSAGE)) {
-					final String message = intent.getStringExtra(Constants.EXTENDED_DATA_MESSAGE);
-					logInBox2("send command: " + message + " to arduino");
-					MainActivity.this.arduinoConnector.send2Arduino(message);
+					final String command = intent.getStringExtra(Constants.EXTENDED_DATA_MESSAGE);
+					processCommand(command);
 				}
 
 			}
+
 		}, localFilter);
 
 		//
@@ -144,12 +147,23 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Se
 		this.rtspUriEditText = (EditText) findViewById(R.id.rtspUriEText);
 		this.mSurfaceView = (SurfaceView) findViewById(R.id.surface);
 		this.mSession = SessionBuilder.getInstance().setContext(getApplicationContext()).setAudioEncoder(SessionBuilder.AUDIO_AAC).setAudioQuality(new AudioQuality(8000, 16000))
-		        .setVideoEncoder(SessionBuilder.VIDEO_H264).setSurfaceView(this.mSurfaceView).setPreviewOrientation(0).setCallback(this).build();
+		        .setVideoEncoder(SessionBuilder.VIDEO_H264).setSurfaceView(this.mSurfaceView).setPreviewOrientation(0).setCallback(this).setVideoQuality(new VideoQuality(176, 144, 15, 50 * 1000))
+		        .build();
+		this.mSession.switchCamera();
 		this.mClient = new RtspClient();
 		this.mClient.setSession(this.mSession);
 		this.mClient.setCallback(this);
-
 		this.mSurfaceView.getHolder().addCallback(this);
+	}
+
+	private void processCommand(final String command) {
+		logInBox2("received command: " + command);
+		if (command.equalsIgnoreCase("toggleStream")) {
+			toggleStream();
+		}
+		else {
+			MainActivity.this.arduinoConnector.send2Arduino(command);
+		}
 
 	}
 
@@ -173,22 +187,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Se
 	}
 
 	public void start(final View view) {
-
-		/*
-		System.out.println("prepare to send message");
-
-		if (WifiCarClient.getInstance() != null) {
-			try {
-				WifiCarClient.getInstance().send("server message");
-			}
-			catch (final InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
-		*/
 		logInBox("wifi strength:" + getWifiStrength());
-
 	}
 
 	public void toggle(final View view) {
@@ -225,8 +224,8 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Se
 				if ((client != null) && client.getHeartBeatSocket().isAlive()) {
 					carStatus.setWifiStrength(getWifiStrength());
 					try {
-						System.out.println(carStatus.toJSONString());
-						client.send(carStatus.toJSONString());
+						System.out.println(carStatus.toString());
+						client.send(carStatus.toString());
 					}
 					catch (final InterruptedException e) {
 
@@ -287,8 +286,8 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Se
 
 	@Override
 	public void onBitrateUpdate(final long bitrate) {
-		// TODO Auto-generated method stub
-
+		final TextView bitRateView = (TextView) findViewById(R.id.bitRateTView);
+		bitRateView.setText("" + (bitrate / 1000) + " kbps");
 	}
 
 	@Override
@@ -313,12 +312,16 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Se
 	public void onSessionStarted() {
 		final Button btn = (Button) findViewById(R.id.ToggleStreamBtn);
 		btn.setText("Stop Stream");
+		carStatus.setIsStreaming(true);
+		carStatus.setRtspUrl(this.rtspUriEditText.getText().toString());
 	}
 
 	@Override
 	public void onSessionStopped() {
 		final Button btn = (Button) findViewById(R.id.ToggleStreamBtn);
 		btn.setText("Start Stream");
+		carStatus.setIsStreaming(false);
+		carStatus.setRtspUrl("Unknown");
 	}
 
 	@Override
