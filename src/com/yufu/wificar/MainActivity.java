@@ -5,21 +5,33 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+import net.majorkernelpanic.streaming.Session;
+import net.majorkernelpanic.streaming.SessionBuilder;
+import net.majorkernelpanic.streaming.audio.AudioQuality;
+import net.majorkernelpanic.streaming.gl.SurfaceView;
+import net.majorkernelpanic.streaming.rtsp.RtspClient;
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.BatteryManager;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
 import android.text.method.ScrollingMovementMethod;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.SurfaceHolder;
 import android.view.View;
+import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.EditText;
@@ -36,10 +48,15 @@ import com.yufu.wificar.domain.CarStatus;
 import com.yufu.wificar.util.Constants;
 import com.yufu.wificar.util.Utils;
 
-public class MainActivity extends Activity {
+public class MainActivity extends Activity implements SurfaceHolder.Callback, Session.Callback, RtspClient.Callback {
 	private ArduinoConnector arduinoConnector;
 	private String carIndexHtmlString = "";
 	private static CarStatus carStatus = new CarStatus();
+
+	private SurfaceView mSurfaceView;
+	private Session mSession;
+	private RtspClient mClient;
+	private EditText rtspUriEditText;
 
 	@Override
 	protected void onCreate(final Bundle savedInstanceState) {
@@ -124,6 +141,16 @@ public class MainActivity extends Activity {
 			}
 		}, filter);
 
+		this.rtspUriEditText = (EditText) findViewById(R.id.rtspUriEText);
+		this.mSurfaceView = (SurfaceView) findViewById(R.id.surface);
+		this.mSession = SessionBuilder.getInstance().setContext(getApplicationContext()).setAudioEncoder(SessionBuilder.AUDIO_AAC).setAudioQuality(new AudioQuality(8000, 16000))
+		        .setVideoEncoder(SessionBuilder.VIDEO_H264).setSurfaceView(this.mSurfaceView).setPreviewOrientation(0).setCallback(this).build();
+		this.mClient = new RtspClient();
+		this.mClient.setSession(this.mSession);
+		this.mClient.setCallback(this);
+
+		this.mSurfaceView.getHolder().addCallback(this);
+
 	}
 
 	@Override
@@ -162,6 +189,10 @@ public class MainActivity extends Activity {
 		*/
 		logInBox("wifi strength:" + getWifiStrength());
 
+	}
+
+	public void toggle(final View view) {
+		toggleStream();
 	}
 
 	private void switchNotChecked() {
@@ -247,4 +278,103 @@ public class MainActivity extends Activity {
 		localIntent.putExtra(Constants.EXTENDED_DATA_STATUS, message);
 		LocalBroadcastManager.getInstance(this).sendBroadcast(localIntent);
 	}
+
+	@Override
+	public void onRtspUpdate(final int message, final Exception exception) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void onBitrateUpdate(final long bitrate) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void onSessionError(final int reason, final int streamType, final Exception e) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void onPreviewStarted() {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void onSessionConfigured() {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void onSessionStarted() {
+		final Button btn = (Button) findViewById(R.id.ToggleStreamBtn);
+		btn.setText("Stop Stream");
+	}
+
+	@Override
+	public void onSessionStopped() {
+		final Button btn = (Button) findViewById(R.id.ToggleStreamBtn);
+		btn.setText("Start Stream");
+	}
+
+	@Override
+	public void surfaceChanged(final SurfaceHolder arg0, final int arg1, final int arg2, final int arg3) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void surfaceCreated(final SurfaceHolder arg0) {
+		this.mSession.startPreview();
+	}
+
+	@Override
+	public void surfaceDestroyed(final SurfaceHolder arg0) {
+		this.mClient.stopStream();
+	}
+
+	@Override
+	public void onDestroy() {
+		super.onDestroy();
+		this.mClient.release();
+		this.mSession.release();
+		this.mSurfaceView.getHolder().removeCallback(this);
+	}
+
+	public void toggleStream() {
+		//mProgressBar.setVisibility(View.VISIBLE);
+		if (!this.mClient.isStreaming()) {
+			String ip, port, path;
+
+			// We save the content user inputs in Shared Preferences
+			final SharedPreferences mPrefs = PreferenceManager.getDefaultSharedPreferences(MainActivity.this);
+			final Editor editor = mPrefs.edit();
+			editor.putString("uri", this.rtspUriEditText.getText().toString());
+
+			editor.commit();
+
+			// We parse the URI written in the Editext
+			final Pattern uri = Pattern.compile("rtsp://(.+):(\\d*)/(.+)");
+			final Matcher m = uri.matcher(this.rtspUriEditText.getText());
+			m.find();
+			ip = m.group(1);
+			port = m.group(2);
+			path = m.group(3);
+
+			//this.mClient.setCredentials(this.mEditTextUsername.getText().toString(), this.mEditTextPassword.getText().toString());
+			this.mClient.setServerAddress(ip, Integer.parseInt(port));
+			this.mClient.setStreamPath("/" + path);
+			this.mClient.startStream();
+
+		}
+		else {
+			// Stops the stream and disconnects from the RTSP server
+			this.mClient.stopStream();
+		}
+	}
+
 }
