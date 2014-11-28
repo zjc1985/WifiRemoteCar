@@ -332,7 +332,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Se
 
 	@Override
 	public void surfaceCreated(final SurfaceHolder arg0) {
-		this.mSession.startPreview();
+		//this.mSession.startPreview();
 	}
 
 	@Override
