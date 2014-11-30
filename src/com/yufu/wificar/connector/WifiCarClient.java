@@ -6,6 +6,8 @@ import java.net.SocketAddress;
 import java.net.UnknownHostException;
 import java.util.concurrent.ArrayBlockingQueue;
 
+import com.yufu.wificar.util.Constants;
+
 public class WifiCarClient {
 	private static ArrayBlockingQueue<String> sendQueue = new ArrayBlockingQueue<String>(100);
 	private final HeartBeatSocket heartBeatSocket;
@@ -32,7 +34,7 @@ public class WifiCarClient {
 			}
 		}).start();
 
-		this.heartBeatSocket = new HeartBeatSocket(this.address, 3000);
+		this.heartBeatSocket = new HeartBeatSocket(this.address, Constants.HEART_BEART_INTERVAL);
 	}
 
 	public static void init(final String hostName, final int port) throws UnknownHostException, IOException {

@@ -3,8 +3,6 @@ package com.yufu.wificar;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -161,6 +159,9 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Se
 		if (command.equalsIgnoreCase("toggleStream")) {
 			toggleStream();
 		}
+		else if (command.equalsIgnoreCase("carInfo")) {
+			sendCarInfo2Server();
+		}
 		else {
 			MainActivity.this.arduinoConnector.send2Arduino(command);
 		}
@@ -214,26 +215,20 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Se
 		startServerListenerIntent.putExtra(ServerListener.KEY_PORT, port);
 
 		startService(startServerListenerIntent);
-
-		//init car status sender
-		final Timer timer = new Timer();
-		timer.scheduleAtFixedRate(new TimerTask() {
-			@Override
-			public void run() {
-				final WifiCarClient client = WifiCarClient.getInstance();
-				if ((client != null) && client.getHeartBeatSocket().isAlive()) {
-					carStatus.setWifiStrength(getWifiStrength());
-					try {
-						System.out.println(carStatus.toString());
-						client.send(carStatus.toString());
-					}
-					catch (final InterruptedException e) {
-
-					}
-				}
+	}
+	
+	private void sendCarInfo2Server() {
+		final WifiCarClient client = WifiCarClient.getInstance();
+		if ((client != null) && client.getHeartBeatSocket().isAlive()) {
+			carStatus.setWifiStrength(getWifiStrength());
+			try {
+				System.out.println(carStatus.toString());
+				client.send(carStatus.toString());
+			}
+			catch (final InterruptedException e) {
 
 			}
-		}, 1000, 5000);
+		}
 	}
 
 	protected void logInBox(final String message) {
@@ -351,6 +346,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Se
 	public void toggleStream() {
 		//mProgressBar.setVisibility(View.VISIBLE);
 		if (!this.mClient.isStreaming()) {
+			this.mSession.startPreview();
 			String ip, port, path;
 
 			// We save the content user inputs in Shared Preferences
@@ -377,6 +373,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Se
 		else {
 			// Stops the stream and disconnects from the RTSP server
 			this.mClient.stopStream();
+			this.mSession.startPreview();
 		}
 	}
 

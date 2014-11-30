@@ -10,4 +10,7 @@ public class Constants {
 	public static final String EXTENDED_DATA_MESSAGE = "com.yufu.wificar.MESSAGE";
 
 	public static final String MESSAGE_TO_SERVER = "com.yufu.wificar.message2Server";
+	
+	
+	public static final int HEART_BEART_INTERVAL=1*60*1000; 
 }

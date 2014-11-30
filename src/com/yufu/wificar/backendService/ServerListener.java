@@ -25,15 +25,19 @@ public class ServerListener extends BaseWifiCarIntentService implements Logger {
 		new Thread(new Runnable() {
 			@Override
 			public void run() {
+				int stopNum=0;
 				while (true) {
 					final String message = queue.poll();
 					if (message == null) {
-						sendBackCommand("stop");
+						if(stopNum<2){
+							sendBackCommand("stop");
+							stopNum++;
+						}
 					}
 					else {
 						sendBackCommand(message);
+						stopNum=0;
 					}
-					;
 					try {
 						Thread.sleep(200);
 					}
